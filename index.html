@@ -3,161 +3,578 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lexical Analyzer</title>
+    <title>Compiler Design - Lexical & Syntax Analyzer</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .code-keyword { color: #d73a49; font-weight: bold; }
-        .code-identifier { color: #6f42c1; }
-        .code-operator { color: #005cc5; font-weight: bold; }
-        .code-number { color: #032f62; }
-        .code-string { color: #22863a; }
-        .code-comment { color: #6a737d; font-style: italic; }
-        .code-punctuation { color: #24292e; }
-        
-        .token-type-keyword { background-color: #ffdce0; }
-        .token-type-identifier { background-color: #f1e8ff; }
-        .token-type-operator { background-color: #dbedff; }
-        .token-type-number { background-color: #c8e1ff; }
-        .token-type-string { background-color: #dafbe1; }
-        .token-type-comment { background-color: #f6f8fa; }
-        .token-type-punctuation { background-color: #f0f0f0; }
+        .token {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .keyword { background: #e9d5ff; color: #6d28d9; }
+        .identifier { background: #dbeafe; color: #1d4ed8; }
+        .number { background: #dcfce7; color: #15803d; }
+        .operator { background: #fef3c7; color: #d97706; }
+        .separator { background: #fce7f3; color: #be185d; }
+        .comparison { background: #f3e8ff; color: #7c3aed; }
+        .success { background: #dcfce7; color: #15803d; }
+        .error { background: #fee2e2; color: #dc2626; }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen p-4 md:p-8">
+<body class="bg-gray-50 min-h-screen p-4">
     <div class="max-w-6xl mx-auto">
         <!-- Header -->
-        <header class="mb-8 text-center">
-            <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-2">Lexical Analyzer</h1>
-            <p class="text-gray-600">A simple lexical analyzer that tokenizes your code input</p>
-        </header>
-        
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <!-- Input Section -->
-            <div class="bg-white rounded-xl shadow-lg p-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-bold text-gray-800">Code Input</h2>
-                    <button id="sampleBtn" class="bg-blue-100 hover:bg-blue-200 text-blue-700 px-4 py-2 rounded-lg transition duration-200">
-                        <i class="fas fa-code mr-2"></i>Load Sample Code
-                    </button>
-                </div>
-                
-                <div class="mb-6">
-                    <div class="flex border-b border-gray-200">
-                        <button class="px-4 py-2 font-medium text-blue-600 border-b-2 border-blue-600">Editor</button>
-                        <button id="guideBtn" class="px-4 py-2 font-medium text-gray-500 hover:text-gray-700">Guide</button>
-                    </div>
-                    
-                    <div id="editorContainer" class="mt-4">
-                        <textarea id="codeInput" rows="15" class="w-full p-4 border border-gray-300 rounded-lg font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Enter your code here...">// Sample code for lexical analysis
-int main() {
-    int x = 10;
-    float y = 3.14;
-    string message = "Hello, World!";
-    
-    if (x > 5) {
-        print(message);
-    }
-    
-    return 0;
-}</textarea>
-                    </div>
-                    
-                    <div id="guideContainer" class="mt-4 hidden">
-                        <div class="bg-gray-50 p-4 rounded-lg">
-                            <h3 class="font-bold text-gray-800 mb-2">How to use:</h3>
-                            <ul class="list-disc pl-5 text-gray-600 space-y-1">
-                                <li>Enter your code in the editor above</li>
-                                <li>Click "Analyze Code" to tokenize your code</li>
-                                <li>Tokens will be displayed in the results table with color coding</li>
-                                <li>Supported token types: Keywords, Identifiers, Operators, Numbers, Strings, Comments, Punctuation</li>
-                            </ul>
-                            
-                            <h3 class="font-bold text-gray-800 mt-4 mb-2">Examples of tokens:</h3>
-                            <div class="grid grid-cols-2 gap-2 text-sm">
-                                <div class="p-2 bg-white rounded border"><span class="code-keyword">Keywords:</span> int, if, return</div>
-                                <div class="p-2 bg-white rounded border"><span class="code-identifier">Identifiers:</span> x, message, main</div>
-                                <div class="p-2 bg-white rounded border"><span class="code-operator">Operators:</span> =, +, >, ==</div>
-                                <div class="p-2 bg-white rounded border"><span class="code-number">Numbers:</span> 10, 3.14, 0</div>
-                                <div class="p-2 bg-white rounded border"><span class="code-string">Strings:</span> "Hello", "World"</div>
-                                <div class="p-2 bg-white rounded border"><span class="code-comment">Comments:</span> // This is a comment</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="flex flex-col sm:flex-row gap-4">
-                    <button id="analyzeBtn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition duration-200 flex items-center justify-center">
-                        <i class="fas fa-play-circle mr-2"></i> Analyze Code
-                    </button>
-                    <button id="clearBtn" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 px-6 rounded-lg transition duration-200 flex items-center justify-center">
-                        <i class="fas fa-broom mr-2"></i> Clear All
-                    </button>
+        <div class="text-center my-10">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2"> Lexical <span class="text-6xl font-bold text-orange-500">&</span> Syntax Analyzer</h1>
+            <!-- <p class="text-gray-600">Complete Lexical + Syntax Analyzer</p> -->
+
+        </div>
+        <hr class="my-5">
+
+        <!-- Input Section -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Source Code Input</h2>
+            <textarea id="codeInput" rows="8" class="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mb-4 font-mono">x = 10 + 5 * 2;
+if (x > 15) {
+    y = x / 2;
+} else {
+    y = x * 2;
+}
+print(y);</textarea>
+            
+            <div class="flex flex-wrap gap-3">
+                <button onclick="analyze()" class="bg-blue-400 hover:bg-blue-500 text-white px-5 py-2 rounded-lg font-medium">
+                    Analyze Code
+                </button>
+                <button onclick="loadCorrectCode()" class="bg-green-400 hover:bg-green-500 text-white px-5 py-2 rounded-lg font-medium">
+                    Load Correct Code
+                </button>
+                <button onclick="loadWrongCode()" class="bg-red-400 hover:bg-red-500 text-white px-5 py-2 rounded-lg font-medium">
+                    Load Wrong Code
+                </button>
+                <button onclick="clearAll()" class="border border-red-400 text-red-400 hover:bg-red-500 hover:text-white px-5 py-2 rounded-lg font-medium">
+                    Clear All
+                </button>
+            </div>
+        </div>
+
+        <!-- Results Tabs -->
+        <div class="mb-6">
+            <div class="flex border-b">
+                <button id="lexicalTab" class="px-4 py-2 font-medium text-blue-600 border-b-2 border-blue-600" onclick="showTab('lexical')">
+                    Lexical Analysis
+                </button>
+                <button id="syntaxTab" class="px-4 py-2 font-medium text-gray-500" onclick="showTab('syntax')">
+                    Syntax Analysis
+                </button>
+            </div>
+        </div>
+
+        <!-- Lexical Analysis Results -->
+        <div id="lexicalResults" class="bg-white rounded-xl shadow-lg p-6 mb-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                </svg>
+                Lexical Analysis Results
+            </h2>
+            
+            <div class="mb-4">
+                <div class="flex items-center justify-between">
+                    <div class="text-sm text-gray-600">Total Tokens Found:</div>
+                    <div id="tokenCount" class="text-2xl font-bold text-gray-800">0</div>
                 </div>
             </div>
             
-            <!-- Output Section -->
-            <div class="bg-white rounded-xl shadow-lg p-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-bold text-gray-800">Analysis Results</h2>
-                    <div class="text-sm text-gray-600">
-                        <span id="tokenCount" class="font-bold text-blue-600">0</span> tokens found
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="bg-gray-100">
+                            <th class="p-3 text-left">#</th>
+                            <th class="p-3 text-left">Token</th>
+                            <th class="p-3 text-left">Type</th>
+                            <th class="p-3 text-left">Value</th>
+                            <th class="p-3 text-left">Line</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tokenTable">
+                        <tr>
+                            <td colspan="5" class="p-8 text-center text-gray-500">
+                                <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                                <p>Click "Analyze Complete" to see lexical analysis results</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Syntax Analysis Results -->
+        <div id="syntaxResults" class="bg-white rounded-xl shadow-lg p-6 mb-6 hidden">
+            <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                </svg>
+                Syntax Analysis Results
+            </h2>
+            
+            <div id="syntaxOutput">
+                <div class="text-center text-gray-500 py-8">
+                    <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <p>Click "Analyze Complete" to see syntax analysis results</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white rounded-xl shadow p-6">
+                <div class="flex items-center">
+                    <div class="bg-blue-100 p-3 rounded-full mr-4">
+                        <svg class="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Lexical Tokens</p>
+                        <p id="statTokens" class="text-2xl font-bold text-gray-800">0</p>
                     </div>
                 </div>
-                
-                <div class="mb-6">
-                    <div class="flex flex-wrap gap-2 mb-4">
-                        <span class="px-3 py-1 rounded-full text-xs font-medium token-type-keyword">Keywords</span>
-                        <span class="px-3 py-1 rounded-full text-xs font-medium token-type-identifier">Identifiers</span>
-                        <span class="px-3 py-1 rounded-full text-xs font-medium token-type-operator">Operators</span>
-                        <span class="px-3 py-1 rounded-full text-xs font-medium token-type-number">Numbers</span>
-                        <span class="px-3 py-1 rounded-full text-xs font-medium token-type-string">Strings</span>
-                        <span class="px-3 py-1 rounded-full text-xs font-medium token-type-comment">Comments</span>
-                        <span class="px-3 py-1 rounded-full text-xs font-medium token-type-punctuation">Punctuation</span>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow p-6">
+                <div class="flex items-center">
+                    <div class="bg-green-100 p-3 rounded-full mr-4">
+                        <svg class="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                        </svg>
                     </div>
-                    
-                    <div class="overflow-x-auto rounded-lg border border-gray-200">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
-                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Token</th>
-                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Value</th>
-                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Line</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tokenTable" class="bg-white divide-y divide-gray-200">
-                                <!-- Tokens will be inserted here -->
-                                <tr id="noTokensRow">
-                                    <td colspan="5" class="px-4 py-8 text-center text-gray-500">
-                                        <i class="fas fa-search text-3xl mb-2"></i>
-                                        <p>No tokens to display. Enter code and click "Analyze Code" to see results.</p>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    <div>
+                        <p class="text-sm text-gray-600">Syntax Status</p>
+                        <p id="statStatus" class="text-2xl font-bold text-gray-800">Waiting</p>
                     </div>
                 </div>
-                
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <h3 class="font-bold text-gray-800 mb-2">Color-coded Preview</h3>
-                    <div id="colorPreview" class="font-mono text-sm p-3 bg-white rounded border border-gray-300 min-h-[100px] whitespace-pre-wrap">
-                        <!-- Color-coded preview will appear here -->
-                        <span class="text-gray-400">Preview will appear here after analysis...</span>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow p-6">
+                <div class="flex items-center">
+                    <div class="bg-red-100 p-3 rounded-full mr-4">
+                        <svg class="w-6 h-6 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Errors Found</p>
+                        <p id="statErrors" class="text-2xl font-bold text-gray-800">0</p>
                     </div>
                 </div>
             </div>
         </div>
-        
-        <!-- Footer -->
-        <footer class="mt-8 pt-6 border-t border-gray-200 text-center text-gray-500 text-sm">
-            <p>Lexical Analyzer Project - Created for Compiler Design Course</p>
-            <p class="mt-1">Uses HTML, Tailwind CSS, and Vanilla JavaScript</p>
-        </footer>
     </div>
 
-   
-    <script src="functon.js"></script>
+    <script>
+        // Token Configuration
+        const tokenTypes = {
+            'KEYWORD': {class: 'keyword', label: 'Keyword', color: 'purple'},
+            'IDENTIFIER': {class: 'identifier', label: 'Identifier', color: 'blue'},
+            'NUMBER': {class: 'number', label: 'Number', color: 'green'},
+            'OPERATOR': {class: 'operator', label: 'Operator', color: 'yellow'},
+            'SEPARATOR': {class: 'separator', label: 'Separator', color: 'pink'},
+            'COMPARISON': {class: 'comparison', label: 'Comparison', color: 'indigo'},
+            'ASSIGNMENT': {class: 'operator', label: 'Assignment', color: 'yellow'}
+        };
+
+        // Keywords
+        const keywords = ['if', 'else', 'print', 'while', 'for'];
+        
+        // Operators
+        const operators = ['+', '-', '*', '/'];
+        const comparisons = ['>', '<', '>=', '<=', '==', '!='];
+        const assignments = ['='];
+        const separators = [';', ',', '(', ')', '{', '}', '[', ']'];
+
+        // DOM Elements
+        const codeInput = document.getElementById('codeInput');
+        const tokenTable = document.getElementById('tokenTable');
+        const syntaxOutput = document.getElementById('syntaxOutput');
+        const lexicalTab = document.getElementById('lexicalTab');
+        const syntaxTab = document.getElementById('syntaxTab');
+        const lexicalResults = document.getElementById('lexicalResults');
+        const syntaxResults = document.getElementById('syntaxResults');
+        const tokenCount = document.getElementById('tokenCount');
+        const statTokens = document.getElementById('statTokens');
+        const statStatus = document.getElementById('statStatus');
+        const statErrors = document.getElementById('statErrors');
+
+        // Tab Navigation
+        function showTab(tabName) {
+            if (tabName === 'lexical') {
+                lexicalResults.classList.remove('hidden');
+                syntaxResults.classList.add('hidden');
+                lexicalTab.className = 'px-4 py-2 font-medium text-blue-600 border-b-2 border-blue-600';
+                syntaxTab.className = 'px-4 py-2 font-medium text-gray-500';
+            } else {
+                lexicalResults.classList.add('hidden');
+                syntaxResults.classList.remove('hidden');
+                lexicalTab.className = 'px-4 py-2 font-medium text-gray-500';
+                syntaxTab.className = 'px-4 py-2 font-medium text-green-600 border-b-2 border-green-600';
+            }
+        }
+
+        // Example Codes
+        function loadCorrectCode() {
+            codeInput.value = `x = 10 + 5 * 2;
+if (x > 15) {
+    y = x / 2;
+} else {
+    y = x * 2;
+}
+print(y);`;
+        }
+
+        function loadWrongCode() {
+            codeInput.value = `x = 10 + 5 * 2
+if (x > 15) {
+    y = x / 2
+} else {
+    y = x * 2
+}
+print(y)`;
+        }
+
+        function clearAll() {
+            codeInput.value = '';
+            tokenTable.innerHTML = `
+                <tr>
+                    <td colspan="5" class="p-8 text-center text-gray-500">
+                        <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <p>Click "Analyze Complete" to see lexical analysis results</p>
+                    </td>
+                </tr>`;
+            syntaxOutput.innerHTML = `
+                <div class="text-center text-gray-500 py-8">
+                    <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <p>Click "Analyze Complete" to see syntax analysis results</p>
+                </div>`;
+            
+            tokenCount.textContent = '0';
+            statTokens.textContent = '0';
+            statStatus.textContent = 'Waiting';
+            statErrors.textContent = '0';
+        }
+
+        // Main Analyze Function
+        function analyze() {
+            const source = codeInput.value;
+            if (!source.trim()) {
+                alert('Please enter some code');
+                return;
+            }
+
+            // 1. Lexical Analysis
+            const lexResult = lexicalAnalysis(source);
+            displayTokens(lexResult.tokens);
+            
+            // 2. Syntax Analysis
+            const syntaxErrors = syntaxAnalysis(source);
+            displaySyntaxResults(syntaxErrors, lexResult.tokens.length);
+        }
+
+        // ================= LEXICAL ANALYZER =================
+        function lexicalAnalysis(source) {
+            const tokens = [];
+            const lines = source.split('\n');
+            
+            for (let lineNum = 0; lineNum < lines.length; lineNum++) {
+                const line = lines[lineNum];
+                let i = 0;
+                
+                while (i < line.length) {
+                    // Skip whitespace
+                    if (line[i] === ' ' || line[i] === '\t') {
+                        i++;
+                        continue;
+                    }
+
+                    // Numbers
+                    if (/[0-9]/.test(line[i])) {
+                        let num = '';
+                        while (i < line.length && /[0-9]/.test(line[i])) {
+                            num += line[i];
+                            i++;
+                        }
+                        tokens.push({
+                            token: 'NUM',
+                            type: 'NUMBER',
+                            value: num,
+                            line: lineNum + 1
+                        });
+                        continue;
+                    }
+
+                    // Identifiers and Keywords
+                    if (/[a-zA-Z_]/.test(line[i])) {
+                        let id = '';
+                        while (i < line.length && /[a-zA-Z0-9_]/.test(line[i])) {
+                            id += line[i];
+                            i++;
+                        }
+                        
+                        if (keywords.includes(id)) {
+                            tokens.push({
+                                token: id.toUpperCase(),
+                                type: 'KEYWORD',
+                                value: id,
+                                line: lineNum + 1
+                            });
+                        } else {
+                            tokens.push({
+                                token: 'ID',
+                                type: 'IDENTIFIER',
+                                value: id,
+                                line: lineNum + 1
+                            });
+                        }
+                        continue;
+                    }
+
+                    // Comparison operators
+                    let found = false;
+                    for (const op of comparisons) {
+                        if (line.startsWith(op, i)) {
+                            tokens.push({
+                                token: 'RELOP',
+                                type: 'COMPARISON',
+                                value: op,
+                                line: lineNum + 1
+                            });
+                            i += op.length;
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (found) continue;
+
+                    // Assignment
+                    if (assignments.includes(line[i])) {
+                        tokens.push({
+                            token: '=',
+                            type: 'ASSIGNMENT',
+                            value: '=',
+                            line: lineNum + 1
+                        });
+                        i++;
+                        continue;
+                    }
+
+                    // Operators
+                    if (operators.includes(line[i])) {
+                        tokens.push({
+                            token: line[i],
+                            type: 'OPERATOR',
+                            value: line[i],
+                            line: lineNum + 1
+                        });
+                        i++;
+                        continue;
+                    }
+
+                    // Separators
+                    if (separators.includes(line[i])) {
+                        tokens.push({
+                            token: line[i],
+                            type: 'SEPARATOR',
+                            value: line[i],
+                            line: lineNum + 1
+                        });
+                        i++;
+                        continue;
+                    }
+
+                    // Skip unknown characters
+                    i++;
+                }
+            }
+            
+            return { tokens };
+        }
+
+        function displayTokens(tokens) {
+            tokenTable.innerHTML = '';
+            
+            if (tokens.length === 0) {
+                tokenTable.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="p-8 text-center text-gray-500">
+                            No tokens found in the source code
+                        </td>
+                    </tr>`;
+                return;
+            }
+            
+            tokens.forEach((token, index) => {
+                const row = document.createElement('tr');
+                row.className = 'border-b hover:bg-gray-50';
+                row.innerHTML = `
+                    <td class="p-3 text-gray-500">${index + 1}</td>
+                    <td class="p-3 font-mono font-bold">${token.token}</td>
+                    <td class="p-3">
+                        <span class="token ${tokenTypes[token.type].class}">
+                            ${tokenTypes[token.type].label}
+                        </span>
+                    </td>
+                    <td class="p-3 font-mono">${token.value}</td>
+                    <td class="p-3">${token.line}</td>
+                `;
+                tokenTable.appendChild(row);
+            });
+            
+            tokenCount.textContent = tokens.length;
+            statTokens.textContent = tokens.length;
+        }
+
+        // ================= SYNTAX ANALYZER =================
+        function syntaxAnalysis(source) {
+            const errors = [];
+            const lines = source.split('\n');
+            
+            // Track braces and parentheses
+            let braceCount = 0;
+            let parenCount = 0;
+            let lastBraceLine = 0;
+            let lastParenLine = 0;
+            
+            // Check each line
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                const lineNum = i + 1;
+                
+                if (!line) continue;
+                
+                // Count braces and parentheses
+                for (let j = 0; j < line.length; j++) {
+                    if (line[j] === '{') {
+                        braceCount++;
+                        lastBraceLine = lineNum;
+                    }
+                    if (line[j] === '}') {
+                        braceCount--;
+                        if (braceCount < 0) {
+                            errors.push(`Line ${lineNum}: Unexpected closing brace '}'`);
+                            braceCount = 0;
+                        }
+                    }
+                    if (line[j] === '(') {
+                        parenCount++;
+                        lastParenLine = lineNum;
+                    }
+                    if (line[j] === ')') {
+                        parenCount--;
+                        if (parenCount < 0) {
+                            errors.push(`Line ${lineNum}: Unexpected closing parenthesis ')'`);
+                            parenCount = 0;
+                        }
+                    }
+                }
+                
+                // Check for assignment statements missing semicolon
+                if (line.includes('=') && !line.includes('==') && !line.includes('!=')) {
+                    const equalIndex = line.indexOf('=');
+                    const beforeEqual = line.substring(0, equalIndex).trim();
+                    
+                    if (beforeEqual && /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(beforeEqual)) {
+                        if (!line.endsWith(';')) {
+                            errors.push(`Line ${lineNum}: Missing semicolon in assignment statement`);
+                        }
+                    }
+                }
+                
+                // Check print statements
+                if (line.startsWith('print(')) {
+                    if (!line.endsWith(');')) {
+                        errors.push(`Line ${lineNum}: Print statement must end with ');'`);
+                    }
+                }
+                
+                // Check if statements
+                if (line.startsWith('if (')) {
+                    if (!line.includes(')')) {
+                        errors.push(`Line ${lineNum}: Missing closing parenthesis in if statement`);
+                    }
+                }
+            }
+            
+            // Final checks
+            if (parenCount > 0) {
+                errors.push(`Line ${lastParenLine}: Missing closing parenthesis`);
+            }
+            if (braceCount > 0) {
+                errors.push(`Line ${lastBraceLine}: Missing closing brace`);
+            }
+            
+            return errors;
+        }
+
+        function displaySyntaxResults(errors, tokenCount) {
+            if (errors.length === 0) {
+                syntaxOutput.innerHTML = `
+                    <div class="bg-green-50 border border-green-200 rounded-xl p-8 text-center">
+                        <div class="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
+                            <svg class="w-8 h-8 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold text-green-800 mb-2">Syntax Check Passed!</h3>
+                        <p class="text-green-700 mb-4">No syntax errors found in the code.</p>
+                        <div class="inline-flex items-center bg-white px-4 py-2 rounded-lg border">
+                            <span class="text-gray-600 mr-2">Tokens analyzed:</span>
+                            <span class="font-bold">${tokenCount}</span>
+                        </div>
+                    </div>`;
+                statStatus.textContent = 'Pass';
+                statStatus.className = 'text-2xl font-bold text-green-600';
+                statErrors.textContent = '0';
+            } else {
+                let errorHtml = '<div class="bg-red-50 border border-red-200 rounded-xl p-6">';
+                errorHtml += '<h3 class="text-xl font-bold text-red-800 mb-4 flex items-center">';
+                errorHtml += '<svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">';
+                errorHtml += '<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>';
+                errorHtml += '</svg>';
+                errorHtml += `Syntax Errors (${errors.length})`;
+                errorHtml += '</h3>';
+                
+                errorHtml += '<div class="space-y-3">';
+                errors.forEach(error => {
+                    errorHtml += `
+                        <div class="flex items-start p-3 bg-white rounded-lg border border-red-100">
+                            <span class="bg-red-100 text-red-800 px-2 py-1 rounded text-sm mr-3">Error</span>
+                            <span class="text-red-700">${error}</span>
+                        </div>`;
+                });
+                errorHtml += '</div></div>';
+                
+                syntaxOutput.innerHTML = errorHtml;
+                statStatus.textContent = 'Fail';
+                statStatus.className = 'text-2xl font-bold text-red-600';
+                statErrors.textContent = errors.length;
+            }
+            
+            // Switch to syntax tab
+            showTab('syntax');
+        }
+
+        // Initialize
+        loadCorrectCode();
+        analyze();
+    </script>
 </body>
 </html>
